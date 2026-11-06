@@ -1,3 +1,5 @@
-const apiKey = "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";
+const apiKey = "LA TUA API KEY QUI !!";
+const apiModel = "IL TUO MODELLO QUI";
 
-/* Questo file è solo di esempio, voi non dovreste committarlo! */
+//modelli per openRouter: "openai/gpt-4o-mini" ppure "openrouter/free"
+//modelli per Google AI Studio: "gemini-3.8-flash"

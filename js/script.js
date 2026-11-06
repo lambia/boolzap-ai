@@ -114,7 +114,7 @@ function getAnswer() {
 			"Authorization": `Bearer ${apiKey}`
 		},
 		body: JSON.stringify({
-			model: "openai/gpt-4o-mini",
+			model: apiModel,
 			messages: formatDataForOpenRouter()
 		})
 	};
