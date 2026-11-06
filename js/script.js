@@ -8,7 +8,8 @@ const contactStatusEl = document.querySelector('.contact-status')
 /********************* PREPARAZIONE DATI *********************/
 //ToDo: spostare i dati in apiConfig.js
 //ToDo: untangle functions chain
-const apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+//ATTENZIONE: il modello va nella URL se usi Google API
+const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent`;
 
 const messages = [
 	{
@@ -100,7 +101,7 @@ function addMessage(messageText, messageType) {
 
 }
 
-//Chiama la webapi di openrouter e ottiene una risposta
+//Chiama la webapi di Gemini e ottiene una risposta
 function getAnswer() {
 
 	// Mostro lo stato nella UI
@@ -111,12 +112,11 @@ function getAnswer() {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
-			"Authorization": `Bearer ${apiKey}`
+			//La chiave va in un header di google, non in Authorization
+			"x-goog-api-key": apiKey
 		},
-		body: JSON.stringify({
-			model: apiModel,
-			messages: formatDataForOpenRouter()
-		})
+		//Il body non contiene il modello, solo i dati
+		body: JSON.stringify(formatDataForGemini())
 	};
 
 	//ToDo: controllare response.ok e gestire errori
@@ -124,7 +124,7 @@ function getAnswer() {
 		return response.json();
 	}).then(data => {
 
-		const risposta = data.choices[0].message.content;
+		const risposta = data.candidates[0].content.parts[0].text;
 		console.log(risposta);
 
 		addMessage(risposta, "received");
@@ -134,30 +134,33 @@ function getAnswer() {
 
 }
 
-function formatDataForOpenRouter() {
-	const results = [
-		{
-			role: "system",
-			content: "Sei Silvia, un'amica che risponde in modo amichevole e informale. Rispondi in italiano, con un tono cordiale e naturale, come farebbe un'amica in una chat. Mantieni le risposte brevi e spontanee."
-		}
-	];
+function formatDataForGemini() {
+	const results = {
+		system_instruction: {
+			parts: [
+				{
+					text: "Sei Silvia, un'amica che risponde in modo amichevole e informale. Rispondi in italiano, con un tono cordiale e naturale, come farebbe un'amica in una chat. Mantieni le risposte brevi e spontanee."
+				}
+			]
+		},
+		contents: []
+	};
 
-	/* array di oggetti. ogni oggetto ha proprietà role e content */
+	/* array di oggetti. ogni oggetto ha proprietà role e parts */
 	/* ogni oggetto rappresenta un prompt */
 
 	for (const messaggio of messages) {
 
 		const oggettoFormattato = {
-			content: messaggio.text,
+			role: messaggio.type == "sent" ? "user" : "model",
+			parts: [
+				{
+					text: messaggio.text,
+				}
+			]
 		};
 
-		if (messaggio.type == "sent") {
-			oggettoFormattato.role = "user";
-		} else {
-			oggettoFormattato.role = "assistant";
-		}
-
-		results.push(oggettoFormattato);
+		results.contents.push(oggettoFormattato);
 
 	}
 
